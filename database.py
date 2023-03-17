@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import certifi
 
-MONGO_URI = 'mongodb+srv://username:4vuUw2ccpC92O1lZ@cluster0.ipz2yn2.mongodb.net/?retryWrites=true&w=majority'
+MONGO_URI = 'mongodb+srv://username:<password>@cluster0.ipz2yn2.mongodb.net/?retryWrites=true&w=majority'
 ca = certifi.where()
 
 
@@ -13,3 +13,6 @@ def db_connection():
     except ConnectionError as e:
         print('Error connecting to the DB')
         raise e
+
+
+db_connection()
