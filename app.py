@@ -1,84 +1,76 @@
-from flask import Flask, abort, request
+from flask import Flask, abort, request, jsonify
+import database as db_connection
+from models.players import Player
+from bson.objectid import ObjectId
+
 
 app = Flask(__name__)
-
-players = [{
-    'id': '1',
-    'first_name': 'Lionel',
-    'last_name': 'Messi',
-    'country': 'Argentina',
-    'club': 'PSG',
-}, {
-    'id': '2',
-    'first_name': 'Kylian',
-    'last_name': 'Mbappe',
-    'country': 'France',
-    'club': 'PSG',
-}, {
-    'id': '3',
-    'first_name': 'Karim',
-    'last_name': 'Benzema',
-    'country': 'France',
-    'club': 'Real Madrid',
-},
-]
+db = db_connection.db_connection()
 
 
 @app.get('/players/club/<club>/')
 def get_player_by_club(club):
-    result = []
-    for p in players:
-        if p['club'] == club:
-            result.append(p)
-    return result
+    players = list(db['players'].find({'club': club}))
+    for player in players:
+        player['_id'] = str(player['_id'])
+
+    return players
 
 
 @app.get('/players/country/<country>/')
 def get_player_by_country(country):
-    result = []
-    for p in players:
-        if p['country'] == country:
-            result.append(p)
-    return result
+    players = list(db['players'].find({'country': country}))
+    for player in players:
+        player['_id'] = str(player['_id'])
+
+    return players
 
 
 @app.get('/players/<id>/')
 def get_player_by_id(id):
-    for p in players:
-        if p['id'] == id:
-            return p
-    abort(404)
+    player = db['players'].find_one({'_id': ObjectId(id)})
+    if player is None:
+        abort(404)
+    player['_id'] = str(player['_id'])
+    return player
 
 
 @app.get('/players')
 def get_players():
+    players = list(db['players'].find())
+    for player in players:
+        player['_id'] = str(player['_id'])
+
     return players
 
 
 @app.post('/players')
 def post_player():
     data = request.get_json()
-    # todo validate data
-    players.append(data)
-    return data
+    try:
+        player = Player(**data)
+        result = db['players'].insert_one(player.to_db_collection())
+        response = {
+            **player.to_db_collection(),
+            'id': str(result.inserted_id),
+        }
+        return jsonify(response)
+    except TypeError:
+        abort(400)
 
 
 @app.put('/players/<id>/')
 def update_club(id):
-    player = get_player_by_id(id)
     data = request.get_json()
-    # todo validate data
-    player['club'] = data['club']
-    delete_player_by_id(id)
-    players.append(player)
-    return player
+    if 'club' not in data or data['club'] == '':
+        abort(400)
+    db['players'].update_one({'_id': ObjectId(id)}, {'$set': {'club': data['club']}})
+    return {}
 
 
 @app.delete('/players/<id>/')
 def delete_player_by_id(id):
-    global players
-
-    players = [p for p in players if p['id'] != id]
+    db['players'].delete_one({'_id': ObjectId(id)})
     return {}
 
 
