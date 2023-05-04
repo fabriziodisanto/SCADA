@@ -2,3 +2,5 @@ Flask
 pymongo
 pymongo[srv]
 certifi
+flask-cors
+pyModbusTCP==0.2.0

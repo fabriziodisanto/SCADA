@@ -1,4 +1,4 @@
-valid_countries = ['Argentina', 'Brazil', 'France']
+valid_countries = ['Argentina', 'Brasil', 'France', 'Peru', 'España']
 
 
 def validate_data(first_name, last_name, country, club):
